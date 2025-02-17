@@ -2,6 +2,8 @@
 
 Skådis Board Generator is a lightweight, web-based tool that generates customizable SVG layouts for Skådis boards. This project allows you to create an accurate digital representation of a Skådis board with configurable dimensions, hole parameters, spacing, and row offset options. It's ideal for applications such as laser cutting, CNC machining, or prototyping.
 
+You can try on [this](https://harcerz.github.io/skadis-gen/)
+
 ## Features
 
 - **Configurable Board Dimensions:** Set the overall width and height of the board.
@@ -26,8 +28,8 @@ Skådis Board Generator is a lightweight, web-based tool that generates customiz
 
 1. Open the `index.html` file in your web browser.
 2. Adjust the parameters (board size, hole spacing, hole dimensions, etc.) using the provided controls.
-3. Click the **"Generuj"** (Generate) button to preview your customized Skådis board.
-4. Click the **"Pobierz SVG"** (Download SVG) button to save the generated SVG file.
+3. Click the **"Generate"** button to preview your customized Skådis board.
+4. Click the **"Download SVG"** button to save the generated SVG file.
 
 ## Installation
 

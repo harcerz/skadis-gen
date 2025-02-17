@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tablica Skådis</title>
+  <title>Skådis Board Generator</title>
   <style>
     body {
       display: flex;
@@ -37,47 +37,45 @@
 </head>
 <body>
   <div class="controls">
-    <h2>Ustawienia</h2>
+    <h2>Settings</h2>
     <label>
-      Szerokość tablicy: 
+      Board width: 
       <input type="number" id="width" value="560" /> mm
     </label>
     <label>
-      Wysokość tablicy: 
+      Board height: 
       <input type="number" id="height" value="560" /> mm
     </label>
-    <!-- Przestrzeń między otworami (odstęp między środkami) -->
     <label>
-      Przestrzeń między otworami (poziomo): 
+      Space between holes (horizontal):
       <input type="number" id="holeSpacing" value="35" /> mm
     </label>
-    <!-- Przestrzeń między otworami (pionowo) – czysta wolna przestrzeń -->
     <label>
-      Przestrzeń między otworami (pionowo): 
+      Space between holes (vertical):
       <input type="number" id="verticalGap" value="5" /> mm
     </label>
     <label>
-      Szerokość otworów: 
+      Hole width:
       <input type="number" id="holeWidth" value="5" /> mm
     </label>
     <label>
-      Wysokość otworów: 
+      Hole height: 
       <input type="number" id="holeHeight" value="15" /> mm
     </label>
     <label>
-      Zaokrąglenie rogów otworów: 
+      Rounding the corners of holes: 
       <input type="number" id="cornerRadius" value="3" /> mm
     </label>
     <label>
-      Zaokrąglenie rogów tablicy: 
+      Rounding board corners: 
       <input type="number" id="boardCornerRadius" value="10" /> mm
     </label>
     <label>
-      Odwróć przesunięcie wierszy:
+      Reverse row offset:
       <input type="checkbox" id="reverseOffset" />
     </label>
-    <button onclick="updateSkadisSvg()">Generuj</button>
-    <button onclick="downloadSvg()">Pobierz SVG</button>
+    <button onclick="updateSkadisSvg()">Generate</button>
+    <button onclick="downloadSvg()">Download SVG</button>
   </div>
   <svg id="skadis-svg"></svg>
   

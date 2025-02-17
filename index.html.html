@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tablica Skådis</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: center;
+      height: 100vh;
+      background-color: #f4f4f4;
+      gap: 20px;
+      padding: 20px;
+    }
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 20px;
+      background: white;
+      border: 1px solid black;
+      border-radius: 10px;
+    }
+    svg {
+      background: white;
+      border: 1px solid black;
+    }
+    button {
+      margin-top: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <h2>Ustawienia</h2>
+    <label>
+      Szerokość tablicy: 
+      <input type="number" id="width" value="560" /> mm
+    </label>
+    <label>
+      Wysokość tablicy: 
+      <input type="number" id="height" value="560" /> mm
+    </label>
+    <!-- Przestrzeń między otworami (odstęp między środkami) -->
+    <label>
+      Przestrzeń między otworami (poziomo): 
+      <input type="number" id="holeSpacing" value="35" /> mm
+    </label>
+    <!-- Przestrzeń między otworami (pionowo) – czysta wolna przestrzeń -->
+    <label>
+      Przestrzeń między otworami (pionowo): 
+      <input type="number" id="verticalGap" value="5" /> mm
+    </label>
+    <label>
+      Szerokość otworów: 
+      <input type="number" id="holeWidth" value="5" /> mm
+    </label>
+    <label>
+      Wysokość otworów: 
+      <input type="number" id="holeHeight" value="15" /> mm
+    </label>
+    <label>
+      Zaokrąglenie rogów otworów: 
+      <input type="number" id="cornerRadius" value="3" /> mm
+    </label>
+    <label>
+      Zaokrąglenie rogów tablicy: 
+      <input type="number" id="boardCornerRadius" value="10" /> mm
+    </label>
+    <label>
+      Odwróć przesunięcie wierszy:
+      <input type="checkbox" id="reverseOffset" />
+    </label>
+    <button onclick="updateSkadisSvg()">Generuj</button>
+    <button onclick="downloadSvg()">Pobierz SVG</button>
+  </div>
+  <svg id="skadis-svg"></svg>
+  
+  <script>
+    /**
+     * Generuje SVG tablicy Skådis z otworami.
+     *
+     * Poziome marginesy:
+     *   leftMargin = holeSpacing/2 + holeWidth/2  (zapewnia 14 kolumn dla 560mm przy domyślnych wartościach)
+     *
+     * Pionowe marginesy (odstęp od krawędzi do górnej krawędzi pierwszego otworu) ustalamy na:
+     *   verticalMargin = verticalGap/2 + holeHeight
+     * Środek pierwszego otworu: firstCenterY = verticalMargin + holeHeight/2.
+     *
+     * Liczba kolumn = floor((width - 2*leftMargin) / (holeWidth + holeSpacing)) + 1.
+     * Liczba rzędów obliczamy jako maksymalną liczbę pełnych otworów,
+     * tak aby górna krawędź pierwszego otworu była na pozycji verticalMargin,
+     * a rysowane otwory nie wystawały poza dolną krawędź.
+     *
+     * Opcja reverseOffset decyduje, które wiersze mają dodatkowe przesunięcie o połowę kroku poziomego:
+     *  - Gdy reverseOffset = false (domyślnie): wiersze o indeksie nieparzystym są przesunięte.
+     *  - Gdy true: przesunięcie dotyczy wierszy parzystych.
+     */
+    function generateSkadisSvg(width, height, holeSpacing = 35, verticalGap = 5, holeWidth = 5, holeHeight = 15, holeCornerRadius = 3, boardCornerRadius = 10, reverseOffset = false) {
+      const horizontalStep = holeWidth + holeSpacing;
+      const verticalStep = holeHeight + verticalGap;
+      
+      // Margines poziomy: ustawiony tak, aby pierwszy otwór był wyśrodkowany
+      const leftMargin = holeSpacing / 2 + holeWidth / 2;
+      
+      // Margines pionowy: odległość od krawędzi do górnej krawędzi pierwszego otworu
+      const verticalMargin = verticalGap / 2 + holeHeight;
+      // Środek pierwszego otworu (w pionie)
+      const firstCenterY = verticalMargin + holeHeight / 2;
+      
+      // Obliczamy liczbę kolumn na podstawie dostępnej szerokości
+      const cols = Math.floor((width - 2 * leftMargin) / horizontalStep) + 1;
+      
+      // Obliczamy liczbę rzędów tak, aby każdy otwór mieścił się, przyjmując, że
+      // dla danego rzędu r, top otworu wynosi: y = (firstCenterY - holeHeight/2) + r * verticalStep.
+      // Rysujemy tylko te rzędy, dla których y + holeHeight <= height.
+      let rows = 0;
+      const rowTops = [];
+      for (let r = 0; ; r++) {
+        const y = (firstCenterY - holeHeight / 2) + r * verticalStep;
+        if (y + holeHeight > height) break;
+        rowTops.push(y);
+        rows++;
+      }
+      
+      const svg = document.getElementById("skadis-svg");
+      svg.setAttribute("width", width + "mm");
+      svg.setAttribute("height", height + "mm");
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.innerHTML = "";
+      
+      // Rysowanie tła tablicy z zaokrąglonymi rogami
+      const board = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      board.setAttribute("x", 0);
+      board.setAttribute("y", 0);
+      board.setAttribute("width", width);
+      board.setAttribute("height", height);
+      board.setAttribute("rx", boardCornerRadius);
+      board.setAttribute("ry", boardCornerRadius);
+      board.setAttribute("fill", "white");
+      board.setAttribute("stroke", "black");
+      svg.appendChild(board);
+      
+      // Rysowanie otworów
+      for (let row = 0; row < rows; row++) {
+        // y to górny róg otworu w danym wierszu
+        const y = rowTops[row];
+        // Wyznaczamy środek otworu w poziomie dla każdego otworu w wierszu
+        for (let col = 0; col < cols; col++) {
+          let centerX = leftMargin + col * horizontalStep;
+          // Ustalanie przesunięcia wiersza – w zależności od opcji reverseOffset
+          if (!reverseOffset) {
+            if (row % 2 === 1) {
+              centerX += horizontalStep / 2;
+            }
+          } else {
+            if (row % 2 === 0) {
+              centerX += horizontalStep / 2;
+            }
+          }
+          const x = centerX - holeWidth / 2;
+          // Jeśli otwór wychodzi poza prawą krawędź, pomijamy go
+          if (x + holeWidth > width) continue;
+          
+          const hole = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          hole.setAttribute("x", x);
+          hole.setAttribute("y", y);
+          hole.setAttribute("width", holeWidth);
+          hole.setAttribute("height", holeHeight);
+          hole.setAttribute("rx", holeCornerRadius);
+          hole.setAttribute("ry", holeCornerRadius);
+          hole.setAttribute("fill", "none");
+          hole.setAttribute("stroke", "black");
+          svg.appendChild(hole);
+        }
+      }
+    }
+    
+    function updateSkadisSvg() {
+      const width = parseInt(document.getElementById("width").value, 10);
+      const height = parseInt(document.getElementById("height").value, 10);
+      const holeSpacing = parseInt(document.getElementById("holeSpacing").value, 10);
+      const verticalGap = parseInt(document.getElementById("verticalGap").value, 10);
+      const holeWidth = parseInt(document.getElementById("holeWidth").value, 10);
+      const holeHeight = parseInt(document.getElementById("holeHeight").value, 10);
+      const holeCornerRadius = parseInt(document.getElementById("cornerRadius").value, 10);
+      const boardCornerRadius = parseInt(document.getElementById("boardCornerRadius").value, 10);
+      const reverseOffset = document.getElementById("reverseOffset").checked;
+      
+      generateSkadisSvg(width, height, holeSpacing, verticalGap, holeWidth, holeHeight, holeCornerRadius, boardCornerRadius, reverseOffset);
+    }
+    
+    function downloadSvg() {
+      const svg = document.getElementById("skadis-svg");
+      const serializer = new XMLSerializer();
+      const source = serializer.serializeToString(svg);
+      const blob = new Blob([source], { type: "image/svg+xml" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "skadis.svg";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    
+    // Inicjalne rysowanie z ustawieniami domyślnymi
+    updateSkadisSvg();
+  </script>
+</body>
+</html>
